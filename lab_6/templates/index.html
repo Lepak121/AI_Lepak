@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wanderlust AI — Туристичний Асистент</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #0c111d;
+      --bg-surface: #161f30;
+      --bg-surface-elevated: #1f2b42;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+      --accent: #06b6d4;
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border-color: #2a3854;
+      --bot-msg-bg: #1c263b;
+      --user-msg-bg: #2563eb;
+      --shadow-sm: 0 2px 4px rgba(0,0,0,0.2);
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background: var(--bg-base);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* HEADER */
+    header {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      background: var(--primary-gradient);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+
+    .brand-info h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+
+    .brand-info p {
+      font-size: 0.75rem;
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn-reset {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 0.45rem 0.9rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn-reset:hover {
+      background: rgba(239, 68, 68, 0.22);
+      border-color: #ef4444;
+    }
+
+    /* MAIN APP CONTAINER */
+    .app-container {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      height: calc(100vh - 65px);
+      overflow: hidden;
+    }
+
+    /* CHAT PANEL */
+    .chat-section {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background: radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.05) 0%, transparent 40%),
+                  radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
+                  var(--bg-base);
+      border-right: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .messages-container {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      scroll-behavior: smooth;
+    }
+
+    .message-row {
+      display: flex;
+      gap: 0.75rem;
+      max-width: 82%;
+      animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-row.user-row {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .bot-avatar {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-color);
+    }
+
+    .user-avatar {
+      background: var(--primary-gradient);
+    }
+
+    .message-bubble {
+      padding: 0.9rem 1.15rem;
+      border-radius: 16px;
+      font-size: 0.92rem;
+      line-height: 1.55;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .message-row.bot-row .message-bubble {
+      background: var(--bot-msg-bg);
+      border: 1px solid var(--border-color);
+      border-top-left-radius: 4px;
+      color: #e2e8f0;
+    }
+
+    .message-row.user-row .message-bubble {
+      background: var(--user-msg-bg);
+      color: #ffffff;
+      border-top-right-radius: 4px;
+    }
+
+    .message-bubble strong {
+      color: #fff;
+    }
+
+    .message-bubble em {
+      color: var(--accent);
+      font-style: normal;
+    }
+
+    .message-bubble ul {
+      margin-left: 1.2rem;
+      margin-top: 0.4rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .meta-tag {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* QUICK PROMPTS */
+    .quick-prompts-bar {
+      padding: 0.6rem 1.5rem;
+      background: rgba(22, 31, 48, 0.7);
+      border-top: 1px solid rgba(42, 56, 84, 0.6);
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .quick-chip {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .quick-chip:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    /* INPUT SECTION */
+    .chat-input-area {
+      padding: 1rem 1.5rem;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: var(--bg-base);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.85rem 1.15rem;
+      border-radius: 12px;
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .chat-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .btn-send {
+      background: var(--primary-gradient);
+      color: #fff;
+      border: none;
+      padding: 0.85rem 1.4rem;
+      border-radius: 12px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-send:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    .btn-send:active {
+      transform: translateY(0);
+    }
+
+    /* SIDEBAR (AI INSPECTOR & MEMORY) */
+    .inspector-section {
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border-color);
+      padding: 1.25rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .inspector-card {
+      background: var(--bg-base);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+    }
+
+    .inspector-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .intent-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.8rem;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      color: #93c5fd;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .conf-bar-wrap {
+      margin-top: 0.6rem;
+    }
+
+    .conf-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+    }
+
+    .conf-bar {
+      height: 6px;
+      background: var(--bg-surface-elevated);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .conf-fill {
+      height: 100%;
+      background: var(--primary-gradient);
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    .entities-list, .slots-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .entity-item, .slot-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-surface-elevated);
+      padding: 0.45rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+    }
+
+    .entity-key, .slot-key {
+      color: var(--text-muted);
+    }
+
+    .entity-val, .slot-val {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .empty-state {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* PROBABILITY MINI CHART */
+    .prob-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .prob-row {
+      display: flex;
+      align-items: center;
+      font-size: 0.72rem;
+      gap: 0.5rem;
+    }
+
+    .prob-name {
+      width: 105px;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .prob-bar-bg {
+      flex: 1;
+      height: 5px;
+      background: var(--bg-surface-elevated);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .prob-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .prob-val {
+      width: 35px;
+      text-align: right;
+      color: #e2e8f0;
+      font-weight: 500;
+    }
+
+    /* TYPING INDICATOR */
+    .typing-indicator {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      padding: 0.6rem 1rem;
+      background: var(--bot-msg-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      width: fit-content;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .dot:nth-child(1) { animation-delay: -0.32s; }
+    .dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">✈️</div>
+      <div class="brand-info">
+        <h1>Wanderlust AI — Туристичний Асистент</h1>
+        <p>Лабораторна робота №6 • Класифікація намірів, NER та Діалогова пам'ять</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-reset" onclick="resetDialogue()" title="Очистити контекст розмови">
+        🔄 Скинути пам'ять
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN APP -->
+  <div class="app-container">
+    
+    <!-- CHAT SECTION -->
+    <section class="chat-section">
+      <div class="messages-container" id="messagesContainer">
+        
+        <!-- Welcome Bot Message -->
+        <div class="message-row bot-row">
+          <div class="avatar bot-avatar">🤖</div>
+          <div>
+            <div class="message-bubble">
+              Вітаю! Я інтелектуальний асистент з туризму <strong>Wanderlust Travel</strong>.<br><br>
+              Я можу допомогти вам:<br>
+              • Підібрати найкращі тури та гарячі путівки<br>
+              • Забронювати поїздку для вас та вашої сім'ї<br>
+              • Дізнатися прогноз погоди та сезонність на курортах<br>
+              • Проконсультувати щодо віз, паспортів та правил в'їзду<br>
+              • З'єднати з живим тревел-менеджером!
+            </div>
+            <div class="meta-tag">
+              <span>Система готова • Очікування запиту</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick suggestions -->
+      <div class="quick-prompts-bar">
+        <button class="quick-chip" onclick="sendQuick('Привіт! Допоможи підібрати тур')">👋 Привіт</button>
+        <button class="quick-chip" onclick="sendQuick('Хочу пляжний тур в Єгипет на двох')">🏖 Тур в Єгипет на двох</button>
+        <button class="quick-chip" onclick="sendQuick('Яка погода в Туреччині у жовтні?')">☀️ Погода в Туреччині</button>
+        <button class="quick-chip" onclick="sendQuick('Чи потрібна віза в Італію для українців?')">🛂 Віза в Італію</button>
+        <button class="quick-chip" onclick="sendQuick('Хочу забронювати цей тур на двох')">📝 Забронювати тур</button>
+        <button class="quick-chip" onclick="sendQuick('Поклич живого менеджера')">👨‍💼 Живий менеджер</button>
+        <button class="quick-chip" onclick="sendQuick('Як скасувати бронь готелю?')">🔄 Скасування туру</button>
+      </div>
+
+      <!-- Typing Indicator -->
+      <div style="padding-left: 1.5rem; padding-bottom: 0.5rem;">
+        <div class="typing-indicator" id="typingIndicator">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      </div>
+
+      <!-- Input box -->
+      <div class="chat-input-area">
+        <input 
+          type="text" 
+          id="userInput" 
+          class="chat-input" 
+          placeholder="Напишіть повідомлення (наприклад: 'Шукаю тур в Італію на 7 днів до 1000 євро')..."
+          onkeypress="handleKeyPress(event)"
+          autocomplete="off"
+        />
+        <button class="btn-send" id="sendBtn" onclick="sendMessage()">
+          Надіслати ✈️
+        </button>
+      </div>
+    </section>
+
+    <!-- SIDEBAR: AI INSPECTOR & MEMORY -->
+    <aside class="inspector-section">
+      
+      <!-- Current Intent Card -->
+      <div class="inspector-card">
+        <div class="inspector-title">
+          <span>Розпізнаний намір (Intent)</span>
+          <span style="font-size: 0.7rem; color: var(--accent);">ML Classifier</span>
+        </div>
+        <div id="intentDisplay">
+          <div class="intent-badge" id="intentBadge">
+            <span>Очікування</span>
+          </div>
+        </div>
+        <div class="conf-bar-wrap">
+          <div class="conf-label">
+            <span>Впевненість моделі (Confidence):</span>
+            <strong id="confValue">0%</strong>
+          </div>
+          <div class="conf-bar">
+            <div class="conf-fill" id="confFill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Extracted Entities -->
+      <div class="inspector-card">
+        <div class="inspector-title">
+          <span>Виділені сутності (Entities)</span>
+          <span style="font-size: 0.7rem; color: var(--accent);">Slot Extractor</span>
+        </div>
+        <div class="entities-list" id="entitiesList">
+          <div class="empty-state">Сутностей ще не виявлено</div>
+        </div>
+      </div>
+
+      <!-- Dialogue Memory & Slots -->
+      <div class="inspector-card">
+        <div class="inspector-title">
+          <span>Пам'ять контексту (Slots)</span>
+          <span style="font-size: 0.7rem; color: var(--accent-green);">Multi-Turn State</span>
+        </div>
+        <div class="slots-list" id="slotsList">
+          <div class="empty-state">Контекст чистий</div>
+        </div>
+      </div>
+
+      <!-- Probability Distribution -->
+      <div class="inspector-card">
+        <div class="inspector-title">
+          <span>Ймовірності намірів (All Intents)</span>
+        </div>
+        <div class="prob-bars" id="probBars">
+          <div class="empty-state">Очікуйте першого запиту</div>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <script>
+    const messagesContainer = document.getElementById('messagesContainer');
+    const userInput = document.getElementById('userInput');
+    const typingIndicator = document.getElementById('typingIndicator');
+    const intentBadge = document.getElementById('intentBadge');
+    const confValue = document.getElementById('confValue');
+    const confFill = document.getElementById('confFill');
+    const entitiesList = document.getElementById('entitiesList');
+    const slotsList = document.getElementById('slotsList');
+    const probBars = document.getElementById('probBars');
+
+    function handleKeyPress(e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    }
+
+    function sendQuick(text) {
+      userInput.value = text;
+      sendMessage();
+    }
+
+    function formatText(text) {
+      // Basic markdown styling
+      let formatted = text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/_(.*?)_/g, '<em>$1</em>')
+        .replace(/\n/g, '<br>');
+      return formatted;
+    }
+
+    function addMessage(text, role, meta = null) {
+      const row = document.createElement('div');
+      row.className = `message-row ${role === 'user' ? 'user-row' : 'bot-row'}`;
+
+      const avatar = document.createElement('div');
+      avatar.className = `avatar ${role === 'user' ? 'user-avatar' : 'bot-avatar'}`;
+      avatar.textContent = role === 'user' ? '👤' : '🤖';
+
+      const contentWrap = document.createElement('div');
+      const bubble = document.createElement('div');
+      bubble.className = 'message-bubble';
+      bubble.innerHTML = formatText(text);
+
+      contentWrap.appendChild(bubble);
+
+      if (meta) {
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'meta-tag';
+        metaDiv.innerHTML = meta;
+        contentWrap.appendChild(metaDiv);
+      }
+
+      row.appendChild(avatar);
+      row.appendChild(contentWrap);
+
+      messagesContainer.appendChild(row);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      userInput.value = '';
+      addMessage(text, 'user');
+
+      typingIndicator.style.display = 'flex';
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text })
+        });
+
+        const data = await response.json();
+        typingIndicator.style.display = 'none';
+
+        const confPct = Math.round((data.confidence || 0) * 100);
+        const metaInfo = `<span>🎯 Намір: <strong>${data.intent}</strong> (${confPct}%)</span>`;
+
+        addMessage(data.bot_text, 'bot', metaInfo);
+
+        // Update Inspector UI
+        updateInspector(data);
+
+      } catch (err) {
+        typingIndicator.style.display = 'none';
+        addMessage('❌ Помилка з\'єднання з сервером. Перевірте роботу бекенду.', 'bot');
+        console.error(err);
+      }
+    }
+
+    function updateInspector(data) {
+      // 1. Intent & Confidence
+      intentBadge.innerHTML = `<span>🎯 ${data.intent}</span>`;
+      const confPct = Math.round((data.confidence || 0) * 100);
+      confValue.textContent = `${confPct}%`;
+      confFill.style.width = `${confPct}%`;
+
+      // 2. Entities
+      entitiesList.innerHTML = '';
+      const entities = data.entities || {};
+      const entKeys = Object.keys(entities);
+      if (entKeys.length === 0) {
+        entitiesList.innerHTML = '<div class="empty-state">Сутностей не виявлено</div>';
+      } else {
+        entKeys.forEach(k => {
+          let val = entities[k];
+          if (typeof val === 'object') val = JSON.stringify(val);
+          const item = document.createElement('div');
+          item.className = 'entity-item';
+          item.innerHTML = `<span class="entity-key">${k}</span><span class="entity-val">${val}</span>`;
+          entitiesList.appendChild(item);
+        });
+      }
+
+      // 3. Slots
+      slotsList.innerHTML = '';
+      const slots = data.slots || {};
+      const slotKeys = Object.keys(slots);
+      if (slotKeys.length === 0) {
+        slotsList.innerHTML = '<div class="empty-state">Контекст чистий</div>';
+      } else {
+        slotKeys.forEach(k => {
+          let val = slots[k];
+          if (typeof val === 'object') val = JSON.stringify(val);
+          const item = document.createElement('div');
+          item.className = 'slot-item';
+          item.innerHTML = `<span class="slot-key">${k}</span><span class="slot-val">${val}</span>`;
+          slotsList.appendChild(item);
+        });
+      }
+
+      // 4. Probabilities
+      probBars.innerHTML = '';
+      const probs = data.all_probs || {};
+      const sortedProbs = Object.entries(probs).sort((a, b) => b[1] - a[1]);
+      if (sortedProbs.length === 0) {
+        probBars.innerHTML = '<div class="empty-state">Немає даних</div>';
+      } else {
+        sortedProbs.forEach(([name, p]) => {
+          const pct = Math.round(p * 100);
+          const row = document.createElement('div');
+          row.className = 'prob-row';
+          row.innerHTML = `
+            <span class="prob-name" title="${name}">${name}</span>
+            <div class="prob-bar-bg">
+              <div class="prob-bar-fill" style="width: ${pct}%"></div>
+            </div>
+            <span class="prob-val">${pct}%</span>
+          `;
+          probBars.appendChild(row);
+        });
+      }
+    }
+
+    async function resetDialogue() {
+      try {
+        await fetch('/api/reset', { method: 'POST' });
+        messagesContainer.innerHTML = '';
+        addMessage('🔄 Контекст розмови та заповнені слоти успішно очищено! Як я можу допомогти вам зараз?', 'bot');
+        intentBadge.innerHTML = '<span>Очікування</span>';
+        confValue.textContent = '0%';
+        confFill.style.width = '0%';
+        entitiesList.innerHTML = '<div class="empty-state">Сутностей ще не виявлено</div>';
+        slotsList.innerHTML = '<div class="empty-state">Контекст чистий</div>';
+        probBars.innerHTML = '<div class="empty-state">Очікуйте першого запиту</div>';
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>
